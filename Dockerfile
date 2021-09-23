@@ -25,7 +25,6 @@ RUN curl https://raw.githubusercontent.com/creationix/nvm/v0.37.2/install.sh | b
 # truffle install based on "mastering ethereum"
 RUN /bin/bash -l -c "nvm install --lts"
 RUN /bin/bash -l -c "npm -g install truffle"
-RUN /bin/bash -l -c "npm install dotenv"
 
 # python web3 install
 RUN /bin/bash -l -c "pip3 install web3"

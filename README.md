@@ -96,42 +96,45 @@ accept all suggestions to create a default `package.json` file.
 
 ### add solidity contract source file
 
-in folder contracts add file [`Faucet.sol`]()
-
-```javascript
-// SPDX-License-Identifier: MIT
-pragma solidity >=0.4.22 <0.9.0;
-
-contract Faucet {
-
-    // default function to accept payments to contract
-    function () external payable {}
-
-    function withdraw(uint withdraw_amount) public {
-        msg.sender.transfer(withdraw_amount);
-    }
-}
-```
+in folder contracts add file [`Faucet.sol`](https://github.com/matthiaszimmermann/truffle-docker/blob/main/faucet/contracts/Faucet.sol)
 
 ### add migration/deployment script
 
-in folder migrations the file [`2_deploy_contracts.js`]().
+in folder migrations the file [`2_deploy_contracts.js`](https://github.com/matthiaszimmermann/truffle-docker/blob/main/faucet/migrations/2_deploy_contracts.js).
 this file tells truffle how the contract should be deployed to the blockchain.
 
 in the case of the faucet contract there is hardly anything to do and the script looks a bit like overkill.
 but then, truffle was created with more complex setups in mind.
 
-```javascript
-const Faucet = artifacts.require("./Faucet.sol");
-
-module.exports = function (deployer) {
-  deployer.deploy(Faucet);
-};
-```
-
 ## compile the contract 
 
-with the completed project setup we are now ready to complile our smart contract.
+with the completed project setup we can now use truffle to complile our smart contract.
+for its work, truffle relies on its configuration file `truffle-config.js`.
+
+as we had initially started a dockerized local ganache chain we need to provide the coordinates of this chain to truffle in order to deploy the contract to that chain.
+
+to keep the `truffle-config.js` somewhat generic the example file in this github repository uses environment variables to obtain the necessary information.
+
+```bash
+cat > .env <<EOL
+SOLC_VERSION="0.8.0"
+HTTP_PROVIDER="http://host.docker.internal:7545"
+TRUFFLE_HOST=host.docker.internal
+TRUFFLE_PORT=7545
+TRUFFLE_NETWORK_ID=*
+MNEMONIC="candy maple cake sugar pudding cream honey rich smooth crumble sweet treat"
+EOL
+```
+
+in case your docker installation does not support `host.docker.internal` you will need to work with the explicit IP address of your machine.
+tools like `ifconfig` help to figure out this address.
+
+before we can compile the contract we need to install the dotenv library inside our docker container (for some unknown reason doing this step inside the dockerfile did not work ...)
+
+```bash
+npm install dotenv
+```
+
 for this, truffle provides the command `truffle compile` as shown below.
 
 ```bash
@@ -140,26 +143,7 @@ truffle compile
 
 ## deploy the contract
 
-for deployment/migration truffle relies on its configuration file `truffle-config.js`.
-
-as we had initially started a dockerized local ganache chain we need to provide the coordinates of this chain to truffle in order to deploy the contract to that chain.
-
-to keep the `truffle-config.js` somewhat generic the example file in this github repository uses environment variables to obtain the necessary information.
-
-```bash
-cat > .env <<EOL
-MNEMONIC="candy maple cake sugar pudding cream honey rich smooth crumble sweet treat"
-HTTP_PROVIDER="http://host.docker.internal:7545"
-TRUFFLE_HOST=host.docker.internal
-TRUFFLE_PORT=7545
-TRUFFLE_NETWORK_ID=*
-EOL
-```
-
-in case your docker installation does not support `host.docker.internal` you will need to work with the explicit IP address of your machine.
-tools like `ifconfig` help to figure out this address.
-
-using network development (implicitly, see truffle-config.json)
+to deploy the contract to our dockerized ganache chain we can now simply use
 
 ```bash
 truffle migrate
@@ -214,13 +198,23 @@ you may use metamask to transfer funds to the contract address (using the comman
 
 ## call the contract "withdraw" method
 
-call the withdraw method using the python script
+the deployed and funded contract can now be used to distribute "money".
+call the withdraw method using the python script that calls the contract on behalf of address 1: `0xf17f52151EbEF6C7334FAD080c5704D77216b732` of our ganache setup.
+
+in the example below the client creates a contract call transaction to transfer 0.123 ethers.
+for this the client creates a transaction with all the necessary information that is signed using the private key of address 1.
 
 ```bash
-python3 ../faucet_client.py \
-    -a 0x627306090abaB3A6e1400e9345bC60c78a8BEf57 \
-    -k 0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3
+python3 client.py \
+    -a 0xf17f52151EbEF6C7334FAD080c5704D77216b732 \
+    -k 0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f \
+    0.123
 ```
+
+please note that 
+* the balance of address 1 will increase slightly less than by 0.123 ethers. 
+the reason for this are the transaction cost of the contract call that is also paid by address 1.
+* the contract call will fail if you try to get more than 1 eth
 
 if successful the output should look similar to the one provided below
 
