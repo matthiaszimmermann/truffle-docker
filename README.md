@@ -113,7 +113,7 @@ for its work, truffle relies on its configuration file `truffle-config.js`.
 
 as we had initially started a dockerized local ganache chain we need to provide the coordinates of this chain to truffle in order to deploy the contract to that chain.
 
-to keep the `truffle-config.js` somewhat generic the example file in this github repository uses environment variables to obtain the necessary information.
+to keep the truffle configuration somewhat generic the example file in this github repository uses environment variables to obtain the necessary information.
 
 ```bash
 cat > .env <<EOL
@@ -129,13 +129,13 @@ EOL
 in case your docker installation does not support `host.docker.internal` you will need to work with the explicit IP address of your machine.
 tools like `ifconfig` help to figure out this address.
 
-before we can compile the contract we need to install the dotenv library inside our docker container (for some unknown reason doing this step inside the dockerfile did not work ...)
+to use the `.env` file for the truffle configuration we need to install the dotenv library.
 
 ```bash
 npm install dotenv
 ```
 
-for this, truffle provides the command `truffle compile` as shown below.
+we are now ready to compile our contract using truffle as shown below.
 
 ```bash
 truffle compile
@@ -148,6 +148,8 @@ to deploy the contract to our dockerized ganache chain we can now simply use
 ```bash
 truffle migrate
 ```
+
+please note that the information that truffle needs to deploy (blockchain to deploy to, the necessary private key to sign transactions ...) is provided by `truffle-config.js` that in turn relies on `.env`
 
 a successful deploy will provide useful information such as the contracts address, similar to the sample output provided below.
 
@@ -186,7 +188,7 @@ successful deployment will also update the meta data files in directory `build` 
 
 for the faucet contract this information will be stored in file `build/contracts/Faucet.json` relative to the faucet project directory.
 
-## fund the faucet contract
+## fund the "faucet" contract
 
 before the deployed contract send any ethers to any requesting address the contract itself needs to actually have its own funds.
 
@@ -218,7 +220,7 @@ the reason for this are the transaction cost of the contract call that is also p
 
 if successful the output should look similar to the one provided below
 
-```bash
+```
 address 0x627306090abaB3A6e1400e9345bC60c78a8BEf57
 pkey 0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3
 web3 provider http://host.docker.internal:7545 chain id 1234 connected True
