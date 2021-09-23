@@ -3,6 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# js/truffle stuff
+.nvmrc
+.env
+node_modules/
+
 # C extensions
 *.so
 
